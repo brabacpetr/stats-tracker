@@ -23,7 +23,6 @@ export async function getAccessToken(): Promise<string> {
     return accessToken;
   }
 
-  const { loadGis } = await import('./google.js');
   const tokenClient = await loadGis();
 
   return new Promise((resolve, reject) => {
