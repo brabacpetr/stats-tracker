@@ -61,3 +61,4 @@ Appends to two sheets: **"Matches"** (match metadata) and **"Player Stats"** (pe
 - `docs/ROADMAP.md` — Full spec: sprint plan, data model interfaces, Sheets schema, GCP setup checklist, file structure blueprint. Read this before starting any sprint.
 - `src/types.ts` — TypeScript interfaces (`Player`, `LogEntry`, `MatchState`, `SheetsConfig`)
 - `src/lib/transform.ts` — The only file with unit tests
+- test
