@@ -3,13 +3,15 @@ import { loadGapi, loadGis } from './google.js';
 let accessToken: string | null = null;
 let tokenExpiry = 0;
 let initialized = false;
+let _tokenClient: google.accounts.oauth2.TokenClient | null = null;
 
 /**
- * Loads GAPI and GIS. Must be called before getAccessToken().
+ * Loads GAPI and GIS. Must be called before getAccessToken() or triggerAuthPopup().
  */
 export async function initGoogleAuth(): Promise<void> {
   if (initialized) return;
-  await Promise.all([loadGapi(), loadGis()]);
+  const [, tc] = await Promise.all([loadGapi(), loadGis()]);
+  _tokenClient = tc;
   initialized = true;
 }
 
@@ -40,6 +42,30 @@ export async function getAccessToken(): Promise<string> {
     // Skip consent prompt on subsequent calls within the same session
     tokenClient.requestAccessToken({ prompt: accessToken ? '' : undefined });
   });
+}
+
+/**
+ * Initiates the OAuth popup by calling requestAccessToken() synchronously.
+ * Must be called directly from a click handler with no awaits before it —
+ * this is required for iOS Safari which blocks popups opened in async callbacks.
+ * Requires initGoogleAuth() to have completed first.
+ */
+export function triggerAuthPopup(onSuccess: () => void, onError: (err: Error) => void): void {
+  if (!_tokenClient) {
+    onError(new Error('Google auth not initialized'));
+    return;
+  }
+  _tokenClient.callback = (response) => {
+    if (response.error) {
+      onError(new Error(response.error_description ?? response.error));
+      return;
+    }
+    accessToken = response.access_token;
+    tokenExpiry = Date.now() + (response.expires_in - 60) * 1000;
+    gapi.client.setToken({ access_token: accessToken });
+    onSuccess();
+  };
+  _tokenClient.requestAccessToken({ prompt: '' });
 }
 
 /**

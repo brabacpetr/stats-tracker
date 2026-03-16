@@ -14,7 +14,7 @@ export function matchStateToMatchRow(state: MatchState): (string | number)[][] {
   const awayTotal = state.awayShots.onGoal + state.awayShots.blocked + state.awayShots.missed;
 
   return [[
-    state.date,
+    `'${state.date}`,
     state.homeTeam,
     state.awayTeam,
     homeTotal,
@@ -59,7 +59,7 @@ export function matchStateToPlayerRows(state: MatchState): (string | number)[][]
     const total = player.shots.onGoal + player.shots.blocked + player.shots.missed;
 
     return [
-      state.date,
+      `'${state.date}`,
       state.awayTeam,
       player.number ?? '',
       player.name,

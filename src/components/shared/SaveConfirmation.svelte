@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { initGoogleAuth, triggerAuthPopup, isSignedIn } from '../../lib/auth.js';
   import { appendMatchData } from '../../lib/sheets.js';
   import { exportAsJson } from '../../lib/transform.js';
   import type { MatchState } from '../../types.js';
@@ -16,8 +18,33 @@
   type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
   let saveStatus = $state<SaveStatus>('idle');
   let errorMessage = $state('');
+  let authReady = $state(false);
 
-  async function handleSave() {
+  // Pre-load GIS/GAPI scripts so requestAccessToken() can be called synchronously
+  // from the click handler (required for iOS Safari popup policy).
+  onMount(async () => {
+    await initGoogleAuth();
+    authReady = true;
+  });
+
+  // Called directly from the click handler — no awaits before triggerAuthPopup()
+  // so iOS Safari allows the OAuth popup to open.
+  function handleSave() {
+    if (isSignedIn()) {
+      doSave();
+      return;
+    }
+    saveStatus = 'saving';
+    triggerAuthPopup(
+      () => doSave(),
+      (err) => {
+        saveStatus = 'error';
+        errorMessage = err.message;
+      }
+    );
+  }
+
+  async function doSave() {
     saveStatus = 'saving';
     errorMessage = '';
     try {
@@ -83,24 +110,24 @@
         <button
           class="btn-primary"
           onclick={handleSave}
-          disabled={status === 'saving'}
-          aria-busy={status === 'saving'}
+          disabled={!authReady || saveStatus === 'saving'}
+          aria-busy={saveStatus === 'saving'}
         >
-          {#if saveStatus ==='saving'}
+          {#if saveStatus === 'saving'}
             <span class="spinner" aria-hidden="true"></span>
             Saving…
-          {:else if saveStatus ==='error'}
+          {:else if saveStatus === 'error'}
             Retry
           {:else}
             Save to Google Sheets
           {/if}
         </button>
 
-        <button class="btn-secondary" onclick={handleDownloadJson} disabled={status === 'saving'}>
+        <button class="btn-secondary" onclick={handleDownloadJson} disabled={saveStatus === 'saving'}>
           Download JSON
         </button>
 
-        {#if status !== 'saving'}
+        {#if saveStatus !== 'saving'}
           <button class="btn-ghost" onclick={onCancel}>Cancel</button>
         {/if}
       </div>

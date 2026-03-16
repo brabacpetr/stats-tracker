@@ -11,7 +11,7 @@
 
   let { onStart }: Props = $props();
 
-  let homeTeam = $state('FbC Pohořelice');
+  let homeTeam = $state('Panthers');
   let awayTeam = $state('');
   let players = $state<Player[]>([]);
   let awayTeamError = $state('');
