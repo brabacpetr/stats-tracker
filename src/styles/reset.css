@@ -7,6 +7,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   tab-size: 4;
+  touch-action: manipulation;
 }
 
 button {
@@ -14,6 +15,7 @@ button {
   border: none;
   background: none;
   font: inherit;
+  touch-action: manipulation;
 }
 
 input {
